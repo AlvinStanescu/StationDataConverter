@@ -1,7 +1,29 @@
+# for auto retrieval install LWP::Protocol::https
 use warnings;
 use Scalar::Util qw(looks_like_number);
+use LWP::Protocol::https;
+use LWP::UserAgent;
 
-open (DATA_FILE,"Lines.csv");
+if (($#ARGV + 1) > 0)
+{
+    open(DATA_FILE, $ARGV[0]);
+}
+else
+{
+    my $ua = LWP::UserAgent->new;
+    my $req = HTTP::Request->new(GET => 'https://spreadsheets.google.com/spreadsheet/pub?hl=en_US&hl=en_US&key=0AtCtEmR70abcdG5ZaWRpRnI5dTFlUXN3U3Y0c0N2Wmc&output=txt');
+    my $res = $ua->request($req);
+    if ($res->is_success) {
+        open(DATA_FILE,">Lines.tsv");
+        print DATA_FILE $res->content;
+        close(DATA_FILE);
+        open(DATA_FILE, "Lines.tsv");
+    }
+    else {
+        print "Failed: ", $res->status_line, "\n";
+    }
+}
+
 open (STATION_DATA,">MyStationsData.plist");
 #	if ($line =~ m/^(\d+),([^,]+),(\d+),([\w|\s|_|\-|\.]+),([\w|\s|(|)|\.|\-|\\|\/]+),([\w|\s|\-|\.|(|)]*),[^,]*,([\d|\.]*),([\d|\.]*)/)
 
@@ -11,7 +33,7 @@ print STATION_DATA '<plist version="1.0">'."\n<dict>\n\t<key>ItemsList</key>\n\t
 $count = 1;
 while ($line = <DATA_FILE>)
 {
-	if ($line =~ m/^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]*),([^,]*),([^,]*),/)
+	if ($line =~ m/^([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t/)
 	{
         if (looks_like_number($1))
         {
